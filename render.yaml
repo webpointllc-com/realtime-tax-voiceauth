@@ -1,6 +1,6 @@
 # render.yaml — Real-Time-Tax Voice Auth prototype (presentation build)
 #
-# SINGLE static-site deploy. Vite+React+Tailwind voice-auth orb.
+# SINGLE static deploy. Vite+React+Tailwind voice-auth orb.
 # Runs fully standalone on mock providers (no backend URL required).
 # Set VITE_API_BASE_URL later to point at a live FastAPI/LLM backend — zero frontend changes.
 #
@@ -8,7 +8,8 @@
 # Hosted under webpointllc-com (public) so Render needs no private-org grant.
 
 services:
-  - type: static_site
+  - type: web
+    runtime: static
     name: realtime-tax-voiceauth
     plan: free
     autoDeploy: true
@@ -27,7 +28,6 @@ services:
         source: /*
         destination: /index.html
     headers:
-      # Allow embedding in Squarespace + webpointllc.com (matches webpoint-proto-builds convention)
       - path: /*
         name: Content-Security-Policy
         value: "frame-ancestors 'self' https://*.squarespace.com https://*.squarespace-cdn.com https://webpointllc.com https://*.webpointllc.com"
