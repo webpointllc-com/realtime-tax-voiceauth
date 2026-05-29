@@ -101,7 +101,8 @@ body.listening-active .va-glow {
 }
 
 .karaoke-glyph-pending {
-  background: linear-gradient(90deg, var(--shimmer-muted), var(--shimmer-muted));
+  /* faint guide text pre-speech — no bright gray block */
+  background: linear-gradient(90deg, rgba(205,214,227,0.18), rgba(205,214,227,0.18));
 }
 
 .karaoke-glyph-done {

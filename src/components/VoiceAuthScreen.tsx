@@ -57,13 +57,15 @@ export function VoiceAuthScreen({
                 I&apos;m listening
               </p>
             ) : null}
-            <KaraokeShimmerText
-              mode="phrase"
-              activeWordIndex={activeWordIndex}
-              phraseComplete={phraseComplete}
-              finActive={finActive}
-              isListening={isListening}
-            />
+            {(isListening || phraseComplete) ? (
+              <KaraokeShimmerText
+                mode="phrase"
+                activeWordIndex={activeWordIndex}
+                phraseComplete={phraseComplete}
+                finActive={finActive}
+                isListening={isListening}
+              />
+            ) : null}
           </div>
 
           {micError ? (
