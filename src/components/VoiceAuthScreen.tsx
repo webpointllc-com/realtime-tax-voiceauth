@@ -45,7 +45,7 @@ export function VoiceAuthScreen({
                   "radial-gradient(circle,rgba(86,150,232,0.18) 0%,rgba(86,150,232,0.05) 44%,transparent 70%)",
               }}
             />
-            <VoiceOrbCanvas amplitude={amplitude} loadIn={orbLoadIn} />
+            <VoiceOrbCanvas amplitude={amplitude} loadIn={orbLoadIn} success={phraseComplete} />
           </div>
 
           <div className="mt-3.5 w-full animate-orb-breathe text-center">

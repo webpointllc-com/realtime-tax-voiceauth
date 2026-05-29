@@ -4,17 +4,21 @@ type Props = {
   amplitude: number;
   /** Subtle faster Y-spin during page / orb load-in (~1.2s). */
   loadIn?: boolean;
+  /** Fires the success FX (white implode -> burst -> afterglow) when it flips true. */
+  success?: boolean;
   className?: string;
 };
 
 export function VoiceOrbCanvas({
   amplitude,
   loadIn = false,
+  success = false,
   className = "",
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ampRef = useRef(amplitude);
   const loadInRef = useRef(loadIn);
+  const successAtRef = useRef<number>(0);
 
   useEffect(() => {
     ampRef.current = amplitude;
@@ -23,6 +27,19 @@ export function VoiceOrbCanvas({
   useEffect(() => {
     loadInRef.current = loadIn;
   }, [loadIn]);
+
+  useEffect(() => {
+    if (success) successAtRef.current = performance.now();
+  }, [success]);
+
+  useEffect(() => {
+    // Dev-only validation hook (active only with ?fx=1) — lets headless tests fire the success FX.
+    if (typeof window === "undefined") return;
+    if (!new URLSearchParams(window.location.search).has("fx")) return;
+    (window as unknown as { __forceSuccess?: () => void }).__forceSuccess = () => {
+      successAtRef.current = performance.now();
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -66,6 +83,20 @@ export function VoiceOrbCanvas({
       const target = ampRef.current;
       amp += (target - amp) * 0.1;
       const loadBoost = loadInRef.current ? 0.55 : 0;
+
+      // ---- success FX timeline (white implode -> burst -> afterglow), ported from Prototype-B ----
+      const easeOutCubic = (x: number) => 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3);
+      const sElapsed = successAtRef.current ? performance.now() - successAtRef.current : Infinity;
+      const sActive = sElapsed < 2200;
+      const implodeP = sActive ? easeOutCubic(sElapsed / 430) : 0;
+      const implodeFade = sActive ? Math.max(0, 1 - Math.max(0, (sElapsed - 430) / 280)) : 0;
+      const fxImplode = implodeP * implodeFade;
+      const burstRise = sActive ? easeOutCubic((sElapsed - 320) / 180) : 0;
+      const burstFade = sActive ? Math.max(0, 1 - easeOutCubic((sElapsed - 520) / 560)) : 0;
+      const fxBurst = burstRise * burstFade;
+      const fxBurstProgress = sActive ? Math.max(0, Math.min(1, (sElapsed - 320) / 620)) : 0;
+      const fxAfterglow = sActive ? Math.max(0, 1 - Math.max(0, (sElapsed - 860) / 1100)) : 0;
+
       ctx.clearRect(0, 0, SIZE, SIZE);
       ctx.globalCompositeOperation = "lighter";
 
@@ -131,6 +162,32 @@ export function VoiceOrbCanvas({
         ctx.beginPath();
         ctx.arc(q.sx, q.sy, r, 0, 6.2832);
         ctx.fill();
+      }
+
+      // ---- success FX draw: implosion glow, then expanding white burst, then soft afterglow ----
+      if (fxImplode > 0.01) {
+        const ir = R * (1.32 - implodeP * 0.54);
+        const ig = ctx.createRadialGradient(CX, CY, ir * 0.28, CX, CY, ir);
+        ig.addColorStop(0, `rgba(255,255,255,${(0.025 * fxImplode).toFixed(3)})`);
+        ig.addColorStop(0.58, `rgba(255,255,255,${(0.18 * fxImplode).toFixed(3)})`);
+        ig.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.beginPath(); ctx.arc(CX, CY, ir, 0, 6.2832); ctx.fillStyle = ig; ctx.fill();
+      }
+      if (fxBurst > 0.01) {
+        const br = R * (0.54 + fxBurstProgress * 1.78);
+        const bg = ctx.createRadialGradient(CX, CY, 0, CX, CY, br);
+        bg.addColorStop(0, `rgba(255,255,255,${(0.42 * fxBurst).toFixed(3)})`);
+        bg.addColorStop(0.22, `rgba(255,255,255,${(0.22 * fxBurst).toFixed(3)})`);
+        bg.addColorStop(0.62, `rgba(255,255,255,${(0.065 * fxBurst).toFixed(3)})`);
+        bg.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.beginPath(); ctx.arc(CX, CY, br, 0, 6.2832); ctx.fillStyle = bg; ctx.fill();
+      }
+      if (fxAfterglow > 0.01) {
+        const ag = ctx.createRadialGradient(CX, CY, R * 0.2, CX, CY, R * 1.7);
+        ag.addColorStop(0, `rgba(74,158,255,${(0.10 * fxAfterglow).toFixed(3)})`);
+        ag.addColorStop(0.5, `rgba(74,158,255,${(0.05 * fxAfterglow).toFixed(3)})`);
+        ag.addColorStop(1, "rgba(74,158,255,0)");
+        ctx.beginPath(); ctx.arc(CX, CY, R * 1.7, 0, 6.2832); ctx.fillStyle = ag; ctx.fill();
       }
 
       ctx.globalCompositeOperation = "source-over";

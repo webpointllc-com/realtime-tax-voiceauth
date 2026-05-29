@@ -99,30 +99,33 @@ export default function App() {
       return;
     }
 
-    void (async () => {
-      const ok = await startListening();
-      if (!ok) {
-        bootPlayedRef.current = false;
-        return;
-      }
-
-      clearListeningLabelTimer();
-      labelTimerRef.current = window.setTimeout(() => {
-        setShowListeningLabel(true);
-      }, WELCOME_LISTENING_LABEL_MS);
-
-      if (!bootPlayedRef.current && !bootRunningRef.current) {
-        bootRunningRef.current = true;
-        bootPlayedRef.current = true;
-        const ac = new AbortController();
-        bootAbortRef.current = ac;
+    // Fire the welcome greeting immediately on tap (the tap is the user gesture browsers
+    // require for audio). Do NOT gate it behind mic permission — speak first, listen in parallel.
+    if (!bootPlayedRef.current && !bootRunningRef.current) {
+      bootRunningRef.current = true;
+      bootPlayedRef.current = true;
+      const ac = new AbortController();
+      bootAbortRef.current = ac;
+      void (async () => {
         try {
           await playBootSequence(ac.signal);
         } finally {
           bootRunningRef.current = false;
           if (bootAbortRef.current === ac) bootAbortRef.current = null;
         }
+      })();
+    }
+
+    void (async () => {
+      const ok = await startListening();
+      if (!ok) {
+        // Mic denied/unavailable: greeting still plays; just no live amplitude.
+        return;
       }
+      clearListeningLabelTimer();
+      labelTimerRef.current = window.setTimeout(() => {
+        setShowListeningLabel(true);
+      }, WELCOME_LISTENING_LABEL_MS);
     })();
   }, [
     isListening,
