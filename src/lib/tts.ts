@@ -11,6 +11,14 @@ import {
 
 let activeAudio: HTMLAudioElement | null = null;
 
+// Pre-warm voices ASAP so the first boot greeting never hits an empty voice list (Chrome loads them async).
+if (typeof window !== "undefined" && "speechSynthesis" in window) {
+  const _warm = () => { try { window.speechSynthesis.getVoices(); } catch {} };
+  _warm();
+  window.speechSynthesis.onvoiceschanged = _warm;
+}
+
+
 const ELEVEN_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY?.trim() ?? "";
 const ELEVEN_VOICE_FEMALE =
   import.meta.env.VITE_ELEVENLABS_VOICE_ID?.trim() || "21m00Tcm4TlvDq8ikWAM";
@@ -85,16 +93,24 @@ export function speakBrowser(
       window.speechSynthesis.speak(utterance);
     };
 
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length) {
+    // Wait for voices to be ready — Chrome populates them asynchronously.
+    if (window.speechSynthesis.getVoices().length) {
       run();
       return;
     }
+    let tries = 0;
+    const poll = window.setInterval(() => {
+      tries += 1;
+      if (window.speechSynthesis.getVoices().length || tries > 30) {
+        window.clearInterval(poll);
+        run();
+      }
+    }, 50);
     window.speechSynthesis.onvoiceschanged = () => {
       window.speechSynthesis.onvoiceschanged = null;
+      window.clearInterval(poll);
       run();
     };
-    window.setTimeout(run, 120);
   });
 }
 

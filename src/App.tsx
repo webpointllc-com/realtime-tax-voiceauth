@@ -34,7 +34,7 @@ export default function App() {
   const [statusNote, setStatusNote] = useState<string | null>(
     FRONTEND_RUNTIME.apiBaseUrl
       ? "Connected · ready when you are"
-      : "Voice preview · say 'my voice is my password'",
+      : "Tap to begin · then say your passphrase",
   );
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function App() {
 
   return (
     <ShimmerLoadIn>
-      <div className="relative flex min-h-dvh min-h-screen flex-col bg-webpoint-bg font-sans text-webpoint-muted">
+      <div className="relative flex min-h-dvh min-h-screen flex-col bg-transparent font-sans text-webpoint-muted">
         <div className="va-perimeter-glow va-glow" aria-hidden="true" />
 
         <div

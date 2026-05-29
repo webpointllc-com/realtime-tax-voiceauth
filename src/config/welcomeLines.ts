@@ -4,10 +4,10 @@
  */
 
 /** Line 1 voice prompt (robot/neutral). */
-export const WELCOME_LINE_1 = "Welcome to Workplace";
+export const WELCOME_LINE_1 = "Welcome to the Real Time Tax Platform";
 
 /** Optional second line — skipped when `WELCOME_SINGLE_LINE` is true. */
-export const WELCOME_LINE_2 = "Say your passphrase to unlock";
+export const WELCOME_LINE_2 = "Please say the passphrase";
 
 /** Two-line mode: pause between line 1 end and line 2 start. */
 export const WELCOME_PAUSE_MS = 500;
