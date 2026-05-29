@@ -7,8 +7,8 @@ export type VoiceAmplitudeState = {
   error: string | null;
 };
 
-const IDLE_BASE = 0.08;
-const IDLE_WAVE = 0.04;
+const IDLE_BASE = 0.14;
+const IDLE_WAVE = 0.12;
 const LISTEN_FLOOR = 0.1;
 /** Display EMA — smooth membrane, not frame-jittery RMS. */
 const AMP_SMOOTH = 0.07;
@@ -116,7 +116,7 @@ export function useVoiceAmplitude(autoStart = false): VoiceAmplitudeState & {
     if (isListening) return;
     const idleLoop = () => {
       idleRef.current += 0.016;
-      const wave = IDLE_BASE + Math.sin(idleRef.current * 1.4) * IDLE_WAVE;
+      const wave = IDLE_BASE + Math.sin(idleRef.current * 1.9) * IDLE_WAVE;
       smoothRef.current += (wave - smoothRef.current) * 0.12;
       setAmplitude(smoothRef.current);
       rafRef.current = requestAnimationFrame(idleLoop);

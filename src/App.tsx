@@ -33,8 +33,8 @@ export default function App() {
   const unlockTriggeredRef = useRef(false);
   const [statusNote, setStatusNote] = useState<string | null>(
     FRONTEND_RUNTIME.apiBaseUrl
-      ? "Backend-ready mode enabled."
-      : "Mock mode enabled. No backend URL configured.",
+      ? "Connected · ready when you are"
+      : "Voice preview · say 'my voice is my password'",
   );
 
   useEffect(() => {
