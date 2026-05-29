@@ -112,7 +112,12 @@ export function VoiceOrbCanvas({
 
       for (let i = 0; i < arr.length; i += 1) {
         const q = arr[i];
-        let bright = Math.pow(q.la, 1.2) * 0.78 + q.d * 0.22 + amp * 0.16;
+        // radial shimmer: wave travels from orb center outward, intensity scales with mic amp
+        const dxc = (q.sx - CX) / R;
+        const dyc = (q.sy - CY) / R;
+        const rad = Math.sqrt(dxc * dxc + dyc * dyc);
+        const ripple = Math.sin(rad * 6.2 - t * 5.0) * (0.10 + amp * 0.32) * amp;
+        let bright = Math.pow(q.la, 1.2) * 0.78 + q.d * 0.22 + amp * 0.16 + ripple;
         bright = Math.max(0, Math.min(1, bright));
         const r = 1.15 * q.persp * (0.86 + q.d * 0.3);
         const cr = (58 + bright * 150) | 0;

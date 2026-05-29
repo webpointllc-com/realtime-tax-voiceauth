@@ -108,6 +108,9 @@ export function VoiceAuthScreen({
               <path d="M19 10.5v1.5a7 7 0 0 1-14 0v-1.5" />
               <path d="M12 19v2.5" />
               <path d="M8.5 21.5h7" />
+              {!isListening && (
+                <line x1="3.5" y1="3.5" x2="20.5" y2="20.5" stroke="currentColor" strokeWidth="1.6" className="text-webpoint-accent-soft" />
+              )}
             </svg>
           </button>
           <span className="mt-2 text-[10px] tracking-[0.14em] text-white/28">
