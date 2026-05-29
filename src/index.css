@@ -1,0 +1,348 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-accent: #4a9eff;
+  --ease-product: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0a0d14;
+}
+
+body.listening-active {
+  /* Perimeter glow layer uses .va-perimeter-glow; class hooks QA / automation. */
+}
+
+/* Full-viewport listening perimeter — oracle border (Proto C production / Siri glow) */
+@keyframes vaGlowBreathe {
+  0%,
+  100% {
+    opacity: 0.48;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.va-perimeter-glow,
+.va-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 76px 2px rgba(255, 255, 255, 0.28),
+    inset 0 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: opacity 0.22s var(--ease-product);
+}
+
+body.listening-active .va-perimeter-glow,
+body.listening-active .va-glow {
+  opacity: 1;
+  animation: vaGlowBreathe 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.listening-active .va-perimeter-glow,
+  body.listening-active .va-glow {
+    animation: none;
+    opacity: 0.72;
+  }
+}
+
+/* Cursor planning shimmer (canonical) — bg-clip:text, one L→R band per line.
+   Refs: Screenshot_2026-05-27_at_7.15.00_AM · 7.14.07_AM · 7.12.24_AM */
+.karaoke-shimmer-line {
+  --shimmer-pos: -28%;
+  --band-tail: 22%;
+  --band-soft: 4%;
+  --shimmer-muted: rgb(113 113 122); /* zinc-500 — left/base grey */
+  --shimmer-peak: rgb(255 255 255);
+  --shimmer-rise: rgb(212 212 216); /* zinc-300 lead-in */
+  --shimmer-fade: rgb(161 161 170); /* zinc-400 trailing fade */
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-muted) 0%,
+    var(--shimmer-muted) calc(var(--shimmer-pos) - var(--band-tail)),
+    var(--shimmer-rise) calc(var(--shimmer-pos) - var(--band-soft) - 2%),
+    var(--shimmer-peak) var(--shimmer-pos),
+    var(--shimmer-fade) calc(var(--shimmer-pos) + var(--band-soft) + 6%),
+    var(--shimmer-muted) calc(var(--shimmer-pos) + var(--band-tail)),
+    var(--shimmer-muted) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  will-change: background;
+}
+
+/* Unlock phrase — per-glyph band on active word only */
+.karaoke-phrase {
+  display: block;
+}
+
+.karaoke-word {
+  white-space: nowrap;
+}
+
+.karaoke-glyph {
+  display: inline-block;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.karaoke-glyph-pending {
+  background: linear-gradient(90deg, var(--shimmer-muted), var(--shimmer-muted));
+}
+
+.karaoke-glyph-done {
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-rise) 0%,
+    var(--shimmer-peak) 45%,
+    var(--shimmer-fade) 100%
+  );
+}
+
+.karaoke-glyph-active {
+  --shimmer-muted: rgb(113 113 122);
+  --shimmer-peak: rgb(255 255 255);
+  --shimmer-rise: rgb(212 212 216);
+  --shimmer-fade: rgb(161 161 170);
+  --shimmer-pos: -32%;
+  --band-tail: 18%;
+  --band-soft: 3.5%;
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-muted) 0%,
+    var(--shimmer-muted) calc(var(--shimmer-pos) - var(--band-tail)),
+    var(--shimmer-rise) calc(var(--shimmer-pos) - var(--band-soft) - 2%),
+    var(--shimmer-peak) var(--shimmer-pos),
+    var(--shimmer-fade) calc(var(--shimmer-pos) + var(--band-soft) + 6%),
+    var(--shimmer-muted) calc(var(--shimmer-pos) + var(--band-tail)),
+    var(--shimmer-muted) 100%
+  );
+}
+
+.karaoke-phrase-fin {
+  animation: karaokePhraseFin 550ms var(--ease-product) forwards;
+}
+
+@keyframes karaokePhraseFin {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  45% {
+    transform: scale(1.035);
+    filter: brightness(1.2) drop-shadow(0 0 12px rgba(255, 255, 255, 0.22));
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Page load-in — subtle diagonal wash on container (not text) */
+.shimmer-load-overlay {
+  background: linear-gradient(
+    108deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 255, 255, 0.03) 46%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.03) 54%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  animation: pageShimmer 1.35s var(--ease-product) forwards;
+}
+
+@keyframes pageShimmer {
+  0% {
+    background-position: 120% 0;
+    opacity: 1;
+  }
+  100% {
+    background-position: -120% 0;
+    opacity: 0;
+  }
+}
+
+.shimmer-load-content {
+  position: relative;
+}
+
+.card-hover {
+  transition: border-color 0.2s var(--ease-product), box-shadow 0.2s var(--ease-product);
+}
+
+.card-hover:hover {
+  border-color: rgba(74, 158, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(74, 158, 255, 0.12);
+}
+
+.listening-ring {
+  box-shadow: 0 0 18px rgba(74, 158, 255, 0.14);
+}
+
+.listening-ring.active {
+  border-color: rgba(74, 158, 255, 0.72);
+  box-shadow: 0 0 28px rgba(74, 158, 255, 0.32);
+}
+
+/* S-PUL generative teaser gate (Proto C — ~2s skeleton, interpreted_answer canon) */
+.spul-generative-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #0a0d14;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--spul-gate-fade, 320ms) var(--ease-product),
+    visibility 0s linear var(--spul-gate-fade, 320ms);
+}
+
+.spul-generative-gate.is-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--spul-gate-fade, 320ms) var(--ease-product),
+    visibility 0s linear 0s;
+}
+
+.spul-gate-inner {
+  width: min(100%, 360px);
+  display: grid;
+  gap: 20px;
+  justify-items: center;
+}
+
+.spul-wordmark {
+  font-size: clamp(28px, 6vw, 36px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.95) 45%,
+    rgba(74, 158, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.95) 55%,
+    rgba(255, 255, 255, 0.35) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: spulWordmarkSweep 1.1s var(--ease-product) infinite;
+}
+
+@keyframes spulWordmarkSweep {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -80% 0;
+  }
+}
+
+.spul-teaser-card {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.spul-skel {
+  display: block;
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.14) 42%,
+    rgba(74, 158, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.14) 58%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 220% 100%;
+  animation: spulSkelShimmer 1.35s var(--ease-product) infinite;
+}
+
+.spul-skel-query {
+  height: 14px;
+  width: 72%;
+}
+
+.spul-skel-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: rgba(255, 255, 255, 0.08);
+  animation: none;
+}
+
+@keyframes spulSkelShimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+.spul-gate-skip {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 51;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 13, 20, 0.85);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--spul-gate-fade, 320ms) var(--ease-product);
+}
+
+.spul-gate-skip.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.spul-gate-skip:focus-visible {
+  outline: 2px solid #4a9eff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spul-wordmark,
+  .spul-skel {
+    animation: none;
+  }
+
+  .spul-generative-gate.is-active {
+    transition-duration: 0.01ms !important;
+  }
+}

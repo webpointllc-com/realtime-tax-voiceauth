@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<!--
+  Prototype C — production voice auth reference (static QA).
+  React app: src/App.tsx + VoiceAuthScreen.tsx + VoiceOrbCanvas.tsx
+
+  Glow: .va-glow is the production alias; React renders .va-perimeter-glow when isListening.
+  This file uses body.demo-always-glow so designers can see glow without mic — remove that
+  class to match React (glow only with body.listening-active).
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Proto C — voice auth production reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --ease-product: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: rgba(255, 255, 255, 0.72);
+      font-family: Poppins, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    @keyframes vaGlowBreathe {
+      0%, 100% { opacity: 0.48; }
+      50% { opacity: 1; }
+    }
+    /* Perimeter glow — Siri / oracle inset border */
+    .va-glow,
+    .va-perimeter-glow {
+      position: fixed;
+      inset: 0;
+      z-index: 6;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 76px 2px rgba(255, 255, 255, 0.28),
+        inset 0 0 1px 0 rgba(255, 255, 255, 0.45);
+      opacity: 0;
+      transition: opacity 0.38s var(--ease-product);
+    }
+    body.demo-always-glow .va-glow,
+    body.listening-active .va-glow,
+    body.listening-active .va-perimeter-glow {
+      opacity: 1;
+      animation: vaGlowBreathe 3.2s ease-in-out infinite;
+    }
+    .copyright {
+      position: fixed;
+      top: calc(20px + env(safe-area-inset-top, 0px));
+      left: calc(20px + env(safe-area-inset-left, 0px));
+      z-index: 10;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(113, 113, 122, 0.95);
+    }
+    .stage {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .orb-wrap {
+      position: relative;
+      width: 220px;
+      height: 220px;
+    }
+    .orb-halo {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 260px;
+      height: 260px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(86, 150, 232, 0.18) 0%,
+        rgba(86, 150, 232, 0.05) 44%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+    #orbCanvas {
+      display: block;
+      width: 220px;
+      height: 220px;
+    }
+    .orb-status {
+      margin-top: 14px;
+      text-align: center;
+    }
+    .orb-status .title {
+      font-size: 17px;
+      font-weight: 400;
+      color: rgba(244, 245, 248, 0.92);
+    }
+    .orb-status .phrase {
+      margin-top: 8px;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.45);
+    }
+    .mic-cluster {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .mic-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 1px solid rgba(74, 158, 255, 0.45);
+      background: rgba(74, 158, 255, 0.07);
+      box-shadow: 0 0 18px rgba(74, 158, 255, 0.14);
+      color: rgba(122, 184, 255, 0.95);
+      cursor: pointer;
+    }
+    body.listening-active .mic-btn {
+      border-color: rgba(74, 158, 255, 0.72);
+      box-shadow: 0 0 28px rgba(74, 158, 255, 0.32);
+    }
+    .mic-hint {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: rgba(255, 255, 255, 0.28);
+    }
+    .mantra {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: rgba(255, 255, 255, 0.3);
+    }
+    .pin-cluster {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      text-align: center;
+    }
+    .pin-cluster .hint {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.32);
+    }
+    .pin-cluster a {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.62);
+    }
+    .qa-bar {
+      position: fixed;
+      right: 12px;
+      top: 12px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+    }
+    .qa-bar button {
+      font-size: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(10, 13, 20, 0.9);
+      color: rgba(255, 255, 255, 0.55);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="demo-always-glow">
+  <div class="va-glow" aria-hidden="true"></div>
+
+  <p class="copyright">© Workplace Technologies, LLC</p>
+
+  <div class="qa-bar">
+    <button type="button" id="toggleListen">Toggle listening</button>
+    <button type="button" id="toggleGlowDemo">Toggle demo glow</button>
+  </div>
+
+  <div class="stage">
+    <div class="orb-wrap">
+      <div class="orb-halo" aria-hidden="true"></div>
+      <canvas id="orbCanvas" width="220" height="220" aria-hidden="true"></canvas>
+    </div>
+    <div class="orb-status">
+      <p class="title" id="statusTitle">I'm listening</p>
+      <p class="phrase" id="statusPhrase">My Voice Is My Password</p>
+    </div>
+    <div class="mic-cluster">
+      <button type="button" class="mic-btn" id="micBtn" aria-label="Microphone">🎤</button>
+      <span class="mic-hint" id="micHint">LISTENING</span>
+    </div>
+  </div>
+
+  <p class="mantra">My voice is my password</p>
+  <div class="pin-cluster">
+    <p class="hint">Enter PIN instead</p>
+    <a href="#">Enter PIN</a>
+  </div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById("orbCanvas");
+      const ctx = canvas.getContext("2d");
+      const DPR = Math.min(window.devicePixelRatio || 1, 2);
+      const SIZE = 220;
+      canvas.width = SIZE * DPR;
+      canvas.height = SIZE * DPR;
+      ctx.scale(DPR, DPR);
+      const CX = SIZE / 2, CY = SIZE / 2, R = 66, N = 760;
+      const pts = [];
+      const GA = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < N; i++) {
+        const y = 1 - (i / (N - 1)) * 2;
+        const rr = Math.sqrt(Math.max(0, 1 - y * y));
+        const th = GA * i;
+        pts.push({ x: Math.cos(th) * rr, y, z: Math.sin(th) * rr });
+      }
+      let lx = -0.52, ly = -0.6, lz = 0.6;
+      const ll = Math.hypot(lx, ly, lz);
+      lx /= ll; ly /= ll; lz /= ll;
+      let t = 0, amp = 0, listening = true, loadIn = true;
+      setTimeout(function () { loadIn = false; }, 1400);
+
+      function frame() {
+        t += 1 / 60;
+        const target = listening ? 0.35 + 0.25 * Math.sin(t * 2.1) : 0;
+        amp += (target - amp) * 0.1;
+        const loadBoost = loadIn ? 0.55 : 0;
+        ctx.clearRect(0, 0, SIZE, SIZE);
+        ctx.globalCompositeOperation = "lighter";
+        const aY = t * (0.14 + amp * 0.08 + loadBoost);
+        const cY = Math.cos(aY), sY = Math.sin(aY);
+        const cX = Math.cos(-0.32), sX = Math.sin(-0.32);
+        const breathe = 1 + Math.sin(t * (0.85 + amp * 0.4)) * (0.018 + amp * 0.012);
+        const arr = [];
+        for (let i = 0; i < pts.length; i++) {
+          const p = pts[i];
+          let x = p.x * cY + p.z * sY;
+          let z = -p.x * sY + p.z * cY;
+          let y = p.y;
+          const y2 = y * cX - z * sX;
+          const z2 = y * sX + z * cX;
+          y = y2; z = z2;
+          x *= breathe; y *= breathe; z *= breathe;
+          const persp = 3 / (3 - z);
+          const sx = CX + x * R * persp;
+          const sy = CY + y * R * persp;
+          const nl = x * lx + y * ly + z * lz;
+          const la = 0.5 + nl * 0.5;
+          const d = (z + 1) / 2;
+          arr.push({ sx, sy, z, persp, la, d });
+        }
+        arr.sort(function (a, b) { return a.z - b.z; });
+        for (let i = 0; i < arr.length; i++) {
+          const q = arr[i];
+          let bright = Math.pow(q.la, 1.2) * 0.78 + q.d * 0.22 + amp * 0.1;
+          bright = Math.max(0, Math.min(1, bright));
+          const r = 1.15 * q.persp * (0.86 + q.d * 0.3);
+          const cr = (58 + bright * 150) | 0;
+          const cg = (116 + bright * 116) | 0;
+          const cb = (165 + bright * 88) | 0;
+          ctx.fillStyle = "rgba(" + cr + "," + cg + "," + cb + "," + (0.04 + bright * 0.11).toFixed(3) + ")";
+          ctx.beginPath();
+          ctx.arc(q.sx, q.sy, r * 2.7, 0, 6.2832);
+          ctx.fill();
+          ctx.fillStyle = "rgba(" + cr + "," + cg + "," + cb + "," + (0.24 + bright * 0.58).toFixed(3) + ")";
+          ctx.beginPath();
+          ctx.arc(q.sx, q.sy, r, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalCompositeOperation = "source-over";
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+
+      document.getElementById("toggleListen").addEventListener("click", function () {
+        listening = !listening;
+        document.body.classList.toggle("listening-active", listening);
+        document.getElementById("statusTitle").textContent = listening ? "I'm listening" : "";
+        document.getElementById("micHint").textContent = listening ? "LISTENING" : "TAP TO UNMUTE";
+      });
+      document.getElementById("toggleGlowDemo").addEventListener("click", function () {
+        document.body.classList.toggle("demo-always-glow");
+      });
+      document.getElementById("micBtn").addEventListener("click", function () {
+        listening = !listening;
+        document.body.classList.toggle("listening-active", listening);
+        document.getElementById("statusTitle").textContent = listening ? "I'm listening" : "";
+        document.getElementById("micHint").textContent = listening ? "LISTENING" : "TAP TO UNMUTE";
+      });
+    })();
+  </script>
+</body>
+</html>
